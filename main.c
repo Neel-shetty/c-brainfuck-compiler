@@ -47,6 +47,17 @@ struct instructions {
   size_t capacity;
 };
 
+enum result_type {
+  OK,
+  ERROR_UNMATCHED_JF,
+  ERROR_UNMATCHED_JB,
+};
+
+struct result {
+  enum result_type type;
+  uint index;
+};
+
 struct instructions *init_instructions() {
   struct instructions *instructions = malloc(sizeof(struct instructions));
 
@@ -130,9 +141,42 @@ void parse_instructions(struct instructions *instructions, char *program) {
   }
 }
 
+struct brackets {
+  uint *items;
+  size_t count;
+  size_t capacity;
+};
+
+struct result check_matching_brackets(struct instructions *instructions) {
+  return (struct result){OK, 0};
+}
+
+void print_instructions(const struct instructions *instrs) {
+  if (instrs == NULL) {
+    // Handle null pointer if needed
+    return;
+  }
+
+  printf("Instructions:\n");
+  printf("Count: %zu\n", instrs->count);
+  printf("Capacity: %zu\n", instrs->capacity);
+
+  if (instrs->count > 0) {
+    printf("Token Type    Index\n");
+    printf("---------------------\n");
+    for (size_t i = 0; i < instrs->count; i++) {
+      printf("%-14c%zu\n", (char)instrs->items[i].type,
+             (size_t)instrs->items[i].index);
+    }
+  } else {
+    printf("No instructions.\n");
+  }
+}
+
 int main(int argc, char **argv) {
   char *program = NULL;
   struct instructions *instructions = NULL;
+  int result = 0;
   // FILE *output;
   // output = fopen("output.txt", "w+");
   char *output;
@@ -140,6 +184,9 @@ int main(int argc, char **argv) {
   // printf("%s", program);
   instructions = init_instructions();
   parse_instructions(instructions, program);
+  print_instructions(instructions);
+
+  struct result r = check_matching_brackets(instructions);
 
   if (instructions != NULL) {
     free(instructions);
