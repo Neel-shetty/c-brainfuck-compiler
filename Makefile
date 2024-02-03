@@ -1,4 +1,13 @@
-main:
-			gcc main.c -o main -Wall -Wextra
+CC = gcc
+CFLAGS = -Wall -Wextra
+
+main: main.c
+	$(CC) $^ -o $@ $(CFLAGS)
+
 run: main
-			./main
+	./main
+
+.PHONY: clean
+clean:
+	rm -f main
+
