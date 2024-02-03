@@ -3,6 +3,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define DA_INIT_CAPACITY 8192
+#define DA_REALLOC(oldptr, oldsz, newsz) realloc(oldptr, newsz)
+#define da_append(da, item)                                                    \
+  do {                                                                         \
+    if ((da)->count >= (da)->capacity) {                                       \
+      size_t new_capacity = (da)->capacity * 2;                                \
+      if (new_capacity == 0) {                                                 \
+        new_capacity = DA_INIT_CAPACITY;                                       \
+      }                                                                        \
+                                                                               \
+      (da)->items =                                                            \
+          DA_REALLOC((da)->items, (da)->capacity * sizeof((da)->items[0]),     \
+                     new_capacity * sizeof((da)->items[0]));                   \
+      (da)->capacity = new_capacity;                                           \
+    }                                                                          \
+                                                                               \
+    (da)->items[(da)->count++] = (item);                                       \
+  } while (0)
+
 #define BF_FILE_LEN 8192
 #define MAX_FILE_NAME_LEN 256
 
@@ -82,20 +101,30 @@ void parse_instructions(struct instructions *instructions, char *program) {
   for (size_t i = 0; i < strlen(program); i++) {
     switch (program[i]) {
     case '>':
+      da_append(instructions, ((struct token){MOVE_RIGHT, i}));
       break;
     case '<':
+      da_append(instructions, ((struct token){MOVE_LEFT, i}));
       break;
     case '+':
+      da_append(instructions, ((struct token){INCREMENT, i}));
       break;
     case '-':
+      da_append(instructions, ((struct token){DECREMENT, i}));
       break;
     case '.':
+      da_append(instructions, ((struct token){OUTPUT, i}));
       break;
     case ',':
+      da_append(instructions, ((struct token){INPUT, i}));
       break;
     case '[':
+      da_append(instructions, ((struct token){JUMP_FORWARD, i}));
       break;
     case ']':
+      da_append(instructions, ((struct token){JUMP_BACKWARD, i}));
+      break;
+    default:
       break;
     }
   }
@@ -112,6 +141,9 @@ int main(int argc, char **argv) {
   instructions = init_instructions();
   parse_instructions(instructions, program);
 
+  if (instructions != NULL) {
+    free(instructions);
+  }
   if (program != NULL) {
     free(program);
   }
