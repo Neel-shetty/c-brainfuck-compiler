@@ -148,7 +148,39 @@ struct brackets {
 };
 
 struct result check_matching_brackets(struct instructions *instructions) {
+  struct brackets counter = {NULL, 0, 0};
+
+  for (size_t i = 0; i < instructions->count; i++) {
+    struct token t = instructions->items[i];
+    if (t.type == JUMP_FORWARD) {
+      da_append(&counter, t.index);
+    } else if (t.type == JUMP_BACKWARD) {
+      if (counter.count == 0) {
+        return (struct result){ERROR_UNMATCHED_JB, t.index};
+      }
+      counter.count--;
+    }
+  }
+
+  if (counter.count != 0) {
+    return (struct result){ERROR_UNMATCHED_JF, counter.items[0]};
+  }
+
+  if (counter.items != NULL) {
+    free(counter.items);
+  }
+
   return (struct result){OK, 0};
+}
+
+void generate_assembly(struct instructions *instructions, char *name) {
+  FILE *f = NULL;
+
+  if (NULL == name) {
+    f = stdout;
+  } else {
+    f = fopen(name, "w+");
+  }
 }
 
 void print_instructions(const struct instructions *instrs) {
@@ -179,7 +211,7 @@ int main(int argc, char **argv) {
   int result = 0;
   // FILE *output;
   // output = fopen("output.txt", "w+");
-  char *output;
+  char *output = "output.txt";
   program = read_bf_file("hello-world.bf");
   // printf("%s", program);
   instructions = init_instructions();
@@ -187,12 +219,20 @@ int main(int argc, char **argv) {
   print_instructions(instructions);
 
   struct result r = check_matching_brackets(instructions);
+  if (r.type != OK) {
+    printf("unmatched brackets");
+    result = 1;
+    goto cleanup;
+  }
 
+  // generate_assembly(instructions, output);
+
+cleanup:
   if (instructions != NULL) {
     free(instructions);
   }
   if (program != NULL) {
     free(program);
   }
-  return 0;
+  return result;
 }
