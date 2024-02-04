@@ -25,6 +25,10 @@
 #define BF_FILE_LEN 8192
 #define MAX_FILE_NAME_LEN 256
 
+#define TAPE_LENGTH 1000
+int tape[TAPE_LENGTH] = {0};
+int tape_index = 0;
+
 enum token_type {
   MOVE_RIGHT = '>',
   MOVE_LEFT = '<',
@@ -183,6 +187,99 @@ void generate_assembly(struct instructions *instructions, char *name) {
   }
 }
 
+void interpret_move_right(uint count) {
+  for (uint i = 0; i < count; i++) {
+    if (tape_index < TAPE_LENGTH) {
+      tape_index++;
+    }
+  }
+  return;
+}
+void interpret_move_left(uint count) {
+  for (uint i = 0; i < count; i++) {
+    if (tape_index != 0) {
+      tape_index--;
+    }
+    return;
+  }
+}
+void interpret_increment(uint count) {
+  for (uint i = 0; i < count; i++) {
+    if (tape[tape_index] == 255) {
+      tape[tape_index] = 0;
+      continue;
+    }
+    tape[tape_index] += 1;
+  }
+}
+void interpret_decrement(uint count) {
+  for (uint i = 0; i < count; i++) {
+    if (tape[tape_index] == 255) {
+      tape[tape_index] = 0;
+      continue;
+    }
+    tape[tape_index] -= 1;
+  }
+}
+
+void interpret_instructions(struct instructions *instructions, char *name,
+                            int *index) {
+  while (*index < instructions->count) {
+    switch (instructions->items[*index].type) {
+    case MOVE_RIGHT: {
+      uint count = 1;
+      while (*index < instructions->count - 1 &&
+             instructions->items[*index + 1].type == MOVE_RIGHT) {
+        count++;
+        (*index)++;
+      }
+      interpret_move_right(count);
+      break;
+    }
+    case MOVE_LEFT: {
+      uint count = 1;
+      while (*index < instructions->count - 1 &&
+             instructions->items[*index + 1].type == MOVE_LEFT) {
+        count++;
+        (*index)++;
+      }
+      interpret_move_left(count);
+      break;
+    }
+    case INCREMENT: {
+      uint count = 1;
+      while (*index < instructions->count - 1 &&
+             instructions->items[*index + 1].type == INCREMENT) {
+        count++;
+        (*index)++;
+      }
+      interpret_increment(count);
+      break;
+    }
+    case DECREMENT: {
+      uint count = 1;
+      while (*index < instructions->count - 1 &&
+             instructions->items[*index + 1].type == INCREMENT) {
+        count++;
+        (*index)++;
+      }
+      interpret_decrement(count);
+      break;
+    }
+    case OUTPUT:
+      printf("%c", tape[tape_index]);
+      break;
+    case INPUT:
+      scanf("%d", &tape[tape_index]);
+      break;
+    case JUMP_FORWARD:
+      break;
+    case JUMP_BACKWARD:
+      break;
+    }
+  }
+}
+
 void print_instructions(const struct instructions *instrs) {
   if (instrs == NULL) {
     // Handle null pointer if needed
@@ -225,6 +322,7 @@ int main(int argc, char **argv) {
     goto cleanup;
   }
 
+  interpret_instructions(instructions, "output.txt", &tape_index);
   // generate_assembly(instructions, output);
 
 cleanup:
