@@ -273,16 +273,41 @@ void interpret_instructions(struct instructions *instructions, char *name,
       scanf("%d", &tape[tape_index]);
       break;
     case JUMP_FORWARD:
+      if (tape[tape_index] == 0) {
+        int loop_count = 1;
+        while (loop_count > 0) {
+          (*index)++;
+          if (instructions->items[*index].type == JUMP_FORWARD) {
+            loop_count++;
+          } else if (instructions->items[*index].type == JUMP_BACKWARD) {
+            loop_count--;
+          }
+        }
+      }
       break;
     case JUMP_BACKWARD:
+      if (tape[tape_index] != 0) {
+        int loop_count = 1;
+        while (loop_count > 0) {
+          (*index)--;
+          if (instructions->items[*index].type == JUMP_FORWARD) {
+            loop_count--;
+          } else if (instructions->items[*index].type == JUMP_BACKWARD) {
+            loop_count++;
+          }
+        }
+      }
+      break;
+    default:
       break;
     }
+    (*index)++;
   }
+  return;
 }
 
 void print_instructions(const struct instructions *instrs) {
   if (instrs == NULL) {
-    // Handle null pointer if needed
     return;
   }
 
