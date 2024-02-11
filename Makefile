@@ -3,9 +3,7 @@ CFLAGS = -Wall -Wextra
 
 main: main.c
 	$(CC) $^ -o $@ $(CFLAGS)
-
-run: main
-	./main
+	nasm -felf64 -g output.asm -o output.o && ld output.o -o output && ./output
 
 .PHONY: clean
 clean:
