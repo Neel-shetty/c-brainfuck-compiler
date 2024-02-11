@@ -181,7 +181,8 @@ void generate_assembly_move_right(FILE *f, unsigned char count) {
   if (count == 1) {
     fprintf(f, "    inc qword [pointer];\n");
   } else {
-    fprintf(f, "    add qword [pointer], %d;\n", count);
+    fprintf(f, "    add qword [pointer], %d\n", count);
+    fprintf(f, "                          ;\n");
   }
 }
 
@@ -189,7 +190,8 @@ void generate_assembly_move_left(FILE *f, unsigned char count) {
   if (count == 1) {
     fprintf(f, "    dec qword [pointer];\n");
   } else {
-    fprintf(f, "    sub qword [pointer], %d;\n", count);
+    fprintf(f, "    sub qword [pointer], %d\n", count);
+    fprintf(f, "                          ;\n");
   }
 }
 
@@ -201,8 +203,9 @@ void generate_assembly_increment(FILE *f, unsigned char count) {
   } else {
     fprintf(f,
             "    mov rax, [pointer];\n"); // move pointer of current cell to rax
-    fprintf(f, "    add byte [rax], %d;\n",
+    fprintf(f, "    add byte [rax], %d\n",
             count); // increment current cell by count
+    fprintf(f, "                          ;\n");
   }
 }
 
@@ -214,8 +217,9 @@ void generate_assembly_decrement(FILE *f, unsigned char count) {
   } else {
     fprintf(f,
             "    mov rax, [pointer];\n"); // move pointer of current cell to rax
-    fprintf(f, "    sub byte [rax], %d;\n",
+    fprintf(f, "    sub byte [rax], %d\n",
             count); // increment current cell by count
+    fprintf(f, "                          ;\n");
   }
 }
 
@@ -238,15 +242,17 @@ void generate_assembly_input(FILE *f) {
 void generate_assembly_jump_forward(FILE *f, uint label) {
   fprintf(f, "    mov rax, [pointer];\n"); // move pointer to rax
   fprintf(f, "    cmp byte [rax], 0;\n");  // compare current cell with 0
-  fprintf(f, "    jne .LB%d;\n", label); // jump to closing bracket if not equal
-  fprintf(f, "    .LF%d:\n", label);     // create forward label
+  fprintf(f, "    je .LB%d\n", label);     // jump to closing bracket if equal
+  fprintf(f, "                      ;\n");
+  fprintf(f, ".LF%d:\n", label); // create forward label
 }
 
 void generate_assembly_jump_backward(FILE *f, uint label) {
   fprintf(f, "    mov rax, [pointer];\n"); // move pointer to rax
   fprintf(f, "    cmp byte [rax], 0;\n");  // compare current cell with 0
-  fprintf(f, "    jne .LF%d;\n", label); // jump to opening bracket if not equal
-  fprintf(f, "    .LB%d:\n", label);     // create backward label
+  fprintf(f, "    jne .LF%d\n", label); // jump to opening bracket if not equal
+  fprintf(f, "                      ;\n");
+  fprintf(f, ".LB%d:\n", label); // create backward label
 }
 
 void generate_assembly_block(FILE *f, struct instructions *instructions,
@@ -287,7 +293,7 @@ void generate_assembly_block(FILE *f, struct instructions *instructions,
     case DECREMENT: {
       uint count = 1;
       while (*index < instructions->count - 1 &&
-             instructions->items[*index + 1].type == INCREMENT) {
+             instructions->items[*index + 1].type == DECREMENT) {
         count++;
         (*index)++;
       }
@@ -301,8 +307,14 @@ void generate_assembly_block(FILE *f, struct instructions *instructions,
     case INPUT:
       generate_assembly_input(f);
       break;
-    case JUMP_FORWARD:
+    case JUMP_FORWARD: {
+      uint label = *index;
+      generate_assembly_jump_forward(f, label);
+      (*index)++;
+      generate_assembly_block(f, instructions, index);
+      generate_assembly_jump_backward(f, label);
       break;
+    }
     case JUMP_BACKWARD:
       break;
     default:
@@ -333,8 +345,9 @@ void generate_assembly(struct instructions *instructions, char *name) {
   fprintf(f, "    mov [pointer], rax;\n"); // save pointer to current cell
   fprintf(f, "\n");
   fprintf(f, "    add rax, 30000;\n"); // move pointer to end of tape;
-  fprintf(f, "    add rdi, rax;\n");
+  fprintf(f, "    add rdi, rax\n");
   fprintf(f, "    mov rax, 12;\n"); // sys call for brk
+  fprintf(f, "    syscall;\n");     // invoke os syscall
   fprintf(f, "\n");
 
   size_t index = 0;
