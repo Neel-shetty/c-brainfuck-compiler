@@ -177,55 +177,81 @@ struct result check_matching_brackets(struct instructions *instructions) {
   return (struct result){OK, 0};
 }
 
-void generate_assembly(struct instructions *instructions, char *name) {
-  FILE *f = NULL;
-
-  if (NULL == name) {
-    f = stdout;
+void generate_assembly_move_right(FILE *f, unsigned char count) {
+  if (count == 1) {
+    fprintf(f, "    inc qword [pointer];\n");
   } else {
-    f = fopen(name, "w+");
+    fprintf(f, "    add qword [pointer], %d;\n", count);
   }
 }
 
-void interpret_move_right(uint count) {
-  for (uint i = 0; i < count; i++) {
-    if (tape_index < TAPE_LENGTH) {
-      tape_index++;
-    }
-  }
-  return;
-}
-void interpret_move_left(uint count) {
-  for (uint i = 0; i < count; i++) {
-    if (tape_index != 0) {
-      tape_index--;
-    }
-    return;
-  }
-}
-void interpret_increment(uint count) {
-  for (uint i = 0; i < count; i++) {
-    if (tape[tape_index] == 255) {
-      tape[tape_index] = 0;
-      continue;
-    }
-    tape[tape_index] += 1;
-  }
-}
-void interpret_decrement(uint count) {
-  for (uint i = 0; i < count; i++) {
-    if (tape[tape_index] == 255) {
-      tape[tape_index] = 0;
-      continue;
-    }
-    tape[tape_index] -= 1;
+void generate_assembly_move_left(FILE *f, unsigned char count) {
+  if (count == 1) {
+    fprintf(f, "    dec qword [pointer];\n");
+  } else {
+    fprintf(f, "    sub qword [pointer], %d;\n", count);
   }
 }
 
-void interpret_instructions(struct instructions *instructions, char *name,
-                            int *index) {
+void generate_assembly_increment(FILE *f, unsigned char count) {
+  if (count == 1) {
+    fprintf(f,
+            "    mov rax, [pointer];\n"); // move pointer of current cell to rax
+    fprintf(f, "    inc byte [rax];\n");  // increment current cell
+  } else {
+    fprintf(f,
+            "    mov rax, [pointer];\n"); // move pointer of current cell to rax
+    fprintf(f, "    add byte [rax], %d;\n",
+            count); // increment current cell by count
+  }
+}
+
+void generate_assembly_decrement(FILE *f, unsigned char count) {
+  if (count == 1) {
+    fprintf(f,
+            "    mov rax, [pointer];\n"); // move pointer of current cell to rax
+    fprintf(f, "    dec byte [rax];\n");  // increment current cell
+  } else {
+    fprintf(f,
+            "    mov rax, [pointer];\n"); // move pointer of current cell to rax
+    fprintf(f, "    sub byte [rax], %d;\n",
+            count); // increment current cell by count
+  }
+}
+
+void generate_assembly_output(FILE *f) {
+  fprintf(f, "    mov rax, 1;\n");         // syscall for write
+  fprintf(f, "    mov rdi, 1;\n");         // stdout
+  fprintf(f, "    mov rsi, [pointer];\n"); // pointer to curr cell
+  fprintf(f, "    mov rdx, 1;\n");         // length
+  fprintf(f, "    syscall;\n"); // invoke write syscall with above args
+}
+
+void generate_assembly_input(FILE *f) {
+  fprintf(f, "    mov rax, 0;\n");         // syscall for read
+  fprintf(f, "    mov rdi, 0;\n");         // stdin
+  fprintf(f, "    mov rsi, [pointer];\n"); // pointer to curr cell
+  fprintf(f, "    mov rdx, 1;\n");         // length
+  fprintf(f, "    syscall;\n"); // invoke read syscall with above args
+}
+
+void generate_assembly_jump_forward(FILE *f, uint label) {
+  fprintf(f, "    mov rax, [pointer];\n"); // move pointer to rax
+  fprintf(f, "    cmp byte [rax], 0;\n");  // compare current cell with 0
+  fprintf(f, "    jne .LB%d;\n", label); // jump to closing bracket if not equal
+  fprintf(f, "    .LF%d:\n", label);     // create forward label
+}
+
+void generate_assembly_jump_backward(FILE *f, uint label) {
+  fprintf(f, "    mov rax, [pointer];\n"); // move pointer to rax
+  fprintf(f, "    cmp byte [rax], 0;\n");  // compare current cell with 0
+  fprintf(f, "    jne .LF%d;\n", label); // jump to opening bracket if not equal
+  fprintf(f, "    .LB%d:\n", label);     // create backward label
+}
+
+void generate_assembly_block(FILE *f, struct instructions *instructions,
+                             size_t *index) {
   while (*index < instructions->count) {
-    printf("%d\n", *index);
     switch (instructions->items[*index].type) {
     case MOVE_RIGHT: {
       uint count = 1;
@@ -234,7 +260,7 @@ void interpret_instructions(struct instructions *instructions, char *name,
         count++;
         (*index)++;
       }
-      interpret_move_right(count);
+      generate_assembly_move_right(f, count);
       break;
     }
     case MOVE_LEFT: {
@@ -244,7 +270,7 @@ void interpret_instructions(struct instructions *instructions, char *name,
         count++;
         (*index)++;
       }
-      interpret_move_left(count);
+      generate_assembly_move_left(f, count);
       break;
     }
     case INCREMENT: {
@@ -254,7 +280,8 @@ void interpret_instructions(struct instructions *instructions, char *name,
         count++;
         (*index)++;
       }
-      interpret_increment(count);
+      // interpret_increment(count);
+      generate_assembly_increment(f, count);
       break;
     }
     case DECREMENT: {
@@ -264,40 +291,19 @@ void interpret_instructions(struct instructions *instructions, char *name,
         count++;
         (*index)++;
       }
-      interpret_decrement(count);
+      // interpret_decrement(count);
+      generate_assembly_decrement(f, count);
       break;
     }
     case OUTPUT:
-      printf("%c", tape[tape_index]);
+      generate_assembly_output(f);
       break;
     case INPUT:
-      scanf("%d", &tape[tape_index]);
+      generate_assembly_input(f);
       break;
     case JUMP_FORWARD:
-      // if (tape[tape_index] == 0) {
-      //   int loop_count = 1;
-      //   while (loop_count > 0) {
-      //     (*index)++;
-      //     if (instructions->items[*index].type == JUMP_FORWARD) {
-      //       loop_count++;
-      //     } else if (instructions->items[*index].type == JUMP_BACKWARD) {
-      //       loop_count--;
-      //     }
-      //   }
-      // }
       break;
     case JUMP_BACKWARD:
-      // if (tape[tape_index] != 0) {
-      //   int loop_count = 1;
-      //   while (loop_count > 0) {
-      //     (*index)--;
-      //     if (instructions->items[*index].type == JUMP_FORWARD) {
-      //       loop_count--;
-      //     } else if (instructions->items[*index].type == JUMP_BACKWARD) {
-      //       loop_count++;
-      //     }
-      //   }
-      // }
       break;
     default:
       break;
@@ -305,6 +311,171 @@ void interpret_instructions(struct instructions *instructions, char *name,
     (*index)++;
   }
 }
+
+void generate_assembly(struct instructions *instructions, char *name) {
+  FILE *f = NULL;
+
+  if (NULL == name) {
+    f = stdout;
+  } else {
+    f = fopen(name, "w+");
+  }
+
+  fprintf(f, "global _start\n");
+  fprintf(f, "\n");
+  fprintf(f, "section .text\n");
+  fprintf(f, "_start:\n");
+  fprintf(f, "    mov rax, 12;\n"); // syscall for brk
+  fprintf(f, "    mov rdi, 0;\n");  // no args
+  fprintf(f, "    syscall;\n");     // invoke os syscall
+  fprintf(f, "\n");
+  fprintf(f, "    mov [tape], rax;\n");    // save pointer to tape
+  fprintf(f, "    mov [pointer], rax;\n"); // save pointer to current cell
+  fprintf(f, "\n");
+  fprintf(f, "    add rax, 30000;\n"); // move pointer to end of tape;
+  fprintf(f, "    add rdi, rax;\n");
+  fprintf(f, "    mov rax, 12;\n"); // sys call for brk
+  fprintf(f, "\n");
+
+  size_t index = 0;
+  generate_assembly_block(f, instructions, &index);
+
+  fprintf(f, "\n");
+  fprintf(f, "    mov rax, 12;\n");   // syscall for brk
+  fprintf(f, "    mov rdi, tape;\n"); // move pointer to start of tape
+  fprintf(f, "    syscall;\n");       // brk syscall
+  fprintf(f, "\n");
+  fprintf(f, "    mov rax, 60;\n");  // syscall for exit
+  fprintf(f, "    xor rdi, rdi;\n"); // exit code 0
+  fprintf(f, "    syscall;\n");      // exit syscall
+  fprintf(f, "\n");
+  fprintf(f, "section .data\n");
+  fprintf(f, "tape: dq 0;\n");    // pointer to tape
+  fprintf(f, "pointer: dq 0;\n"); // pointer to current cell
+
+  if (name != NULL) {
+    fclose(f);
+  }
+}
+//
+// void interpret_move_right(uint count) {
+//   for (uint i = 0; i < count; i++) {
+//     if (tape_index < TAPE_LENGTH) {
+//       tape_index++;
+//     }
+//   }
+//   return;
+// }
+// void interpret_move_left(uint count) {
+//   for (uint i = 0; i < count; i++) {
+//     if (tape_index != 0) {
+//       tape_index--;
+//     }
+//     return;
+//   }
+// }
+// void interpret_increment(uint count) {
+//   for (uint i = 0; i < count; i++) {
+//     if (tape[tape_index] == 255) {
+//       tape[tape_index] = 0;
+//       continue;
+//     }
+//     tape[tape_index] += 1;
+//   }
+// }
+// void interpret_decrement(uint count) {
+//   for (uint i = 0; i < count; i++) {
+//     if (tape[tape_index] == 255) {
+//       tape[tape_index] = 0;
+//       continue;
+//     }
+//     tape[tape_index] -= 1;
+//   }
+// }
+//
+// void interpret_instructions(struct instructions *instructions, char *name,
+//                             int *index) {
+//   while (*index < instructions->count) {
+//     printf("%d\n", *index);
+//     switch (instructions->items[*index].type) {
+//     case MOVE_RIGHT: {
+//       uint count = 1;
+//       while (*index < instructions->count - 1 &&
+//              instructions->items[*index + 1].type == MOVE_RIGHT) {
+//         count++;
+//         (*index)++;
+//       }
+//       interpret_move_right(count);
+//       break;
+//     }
+//     case MOVE_LEFT: {
+//       uint count = 1;
+//       while (*index < instructions->count - 1 &&
+//              instructions->items[*index + 1].type == MOVE_LEFT) {
+//         count++;
+//         (*index)++;
+//       }
+//       interpret_move_left(count);
+//       break;
+//     }
+//     case INCREMENT: {
+//       uint count = 1;
+//       while (*index < instructions->count - 1 &&
+//              instructions->items[*index + 1].type == INCREMENT) {
+//         count++;
+//         (*index)++;
+//       }
+//       interpret_increment(count);
+//       break;
+//     }
+//     case DECREMENT: {
+//       uint count = 1;
+//       while (*index < instructions->count - 1 &&
+//              instructions->items[*index + 1].type == INCREMENT) {
+//         count++;
+//         (*index)++;
+//       }
+//       interpret_decrement(count);
+//       break;
+//     }
+//     case OUTPUT:
+//       printf("%c", tape[tape_index]);
+//       break;
+//     case INPUT:
+//       scanf("%d", &tape[tape_index]);
+//       break;
+//     case JUMP_FORWARD:
+//       // if (tape[tape_index] == 0) {
+//       //   int loop_count = 1;
+//       //   while (loop_count > 0) {
+//       //     (*index)++;
+//       //     if (instructions->items[*index].type == JUMP_FORWARD) {
+//       //       loop_count++;
+//       //     } else if (instructions->items[*index].type == JUMP_BACKWARD) {
+//       //       loop_count--;
+//       //     }
+//       //   }
+//       // }
+//       break;
+//     case JUMP_BACKWARD:
+//       // if (tape[tape_index] != 0) {
+//       //   int loop_count = 1;
+//       //   while (loop_count > 0) {
+//       //     (*index)--;
+//       //     if (instructions->items[*index].type == JUMP_FORWARD) {
+//       //       loop_count--;
+//       //     } else if (instructions->items[*index].type == JUMP_BACKWARD) {
+//       //       loop_count++;
+//       //     }
+//       //   }
+//       // }
+//       break;
+//     default:
+//       break;
+//     }
+//     (*index)++;
+//   }
+// }
 
 void print_instructions(const struct instructions *instrs) {
   if (instrs == NULL) {
@@ -331,11 +502,8 @@ int main(int argc, char **argv) {
   char *program = NULL;
   struct instructions *instructions = NULL;
   int result = 0;
-  // FILE *output;
-  // output = fopen("output.txt", "w+");
-  char *output = "output.txt";
+  char *output = "output.asm";
   program = read_bf_file("hello-world.bf");
-  // printf("%s", program);
   instructions = init_instructions();
   parse_instructions(instructions, program);
   // print_instructions(instructions);
@@ -347,8 +515,8 @@ int main(int argc, char **argv) {
     goto cleanup;
   }
 
-  interpret_instructions(instructions, "output.txt", &tape_index);
-  // generate_assembly(instructions, output);
+  // interpret_instructions(instructions, "output.txt", &tape_index);
+  generate_assembly(instructions, output);
 
 cleanup:
   if (instructions != NULL) {
