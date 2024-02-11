@@ -516,7 +516,7 @@ int main(int argc, char **argv) {
   struct instructions *instructions = NULL;
   int result = 0;
   char *output = "output.asm";
-  program = read_bf_file("hello-world.bf");
+  program = read_bf_file("calculator.bf");
   instructions = init_instructions();
   parse_instructions(instructions, program);
   // print_instructions(instructions);
