@@ -316,7 +316,7 @@ void generate_assembly_block(FILE *f, struct instructions *instructions,
       break;
     }
     case JUMP_BACKWARD:
-      break;
+      return;
     default:
       break;
     }

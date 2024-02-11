@@ -30,6 +30,11 @@ _start:
     inc qword [pointer];
     mov rax, [pointer];
     dec byte [rax];
+    mov rax, [pointer];
+    cmp byte [rax], 0;
+    jne .LF9
+                      ;
+.LB9:
     dec qword [pointer];
     mov rax, 1;
     mov rdi, 1;
@@ -52,6 +57,11 @@ _start:
     inc qword [pointer];
     mov rax, [pointer];
     dec byte [rax];
+    mov rax, [pointer];
+    cmp byte [rax], 0;
+    jne .LF30
+                      ;
+.LB30:
     dec qword [pointer];
     mov rax, [pointer];
     inc byte [rax];
@@ -98,6 +108,11 @@ _start:
     inc qword [pointer];
     mov rax, [pointer];
     dec byte [rax];
+    mov rax, [pointer];
+    cmp byte [rax], 0;
+    jne .LF66
+                      ;
+.LB66:
     dec qword [pointer];
     mov rax, [pointer];
     add byte [rax], 2
@@ -131,6 +146,11 @@ _start:
     inc qword [pointer];
     mov rax, [pointer];
     dec byte [rax];
+    mov rax, [pointer];
+    cmp byte [rax], 0;
+    jne .LF102
+                      ;
+.LB102:
     dec qword [pointer];
     mov rax, [pointer];
     inc byte [rax];
@@ -186,6 +206,11 @@ _start:
     inc qword [pointer];
     mov rax, [pointer];
     dec byte [rax];
+    mov rax, [pointer];
+    cmp byte [rax], 0;
+    jne .LF148
+                      ;
+.LB148:
     dec qword [pointer];
     mov rax, [pointer];
     inc byte [rax];
@@ -194,31 +219,6 @@ _start:
     mov rsi, [pointer];
     mov rdx, 1;
     syscall;
-    mov rax, [pointer];
-    cmp byte [rax], 0;
-    jne .LF148
-                      ;
-.LB148:
-    mov rax, [pointer];
-    cmp byte [rax], 0;
-    jne .LF102
-                      ;
-.LB102:
-    mov rax, [pointer];
-    cmp byte [rax], 0;
-    jne .LF66
-                      ;
-.LB66:
-    mov rax, [pointer];
-    cmp byte [rax], 0;
-    jne .LF30
-                      ;
-.LB30:
-    mov rax, [pointer];
-    cmp byte [rax], 0;
-    jne .LF9
-                      ;
-.LB9:
 
     mov rax, 12;
     mov rdi, tape;
