@@ -16,4 +16,5 @@ pacman -S make binutils nasm
 ```console
 make
 ./bfc examples/hello-world.bf -o hello-world
+./hello-world
 ```
