@@ -524,10 +524,10 @@ int main(int argc, char **argv) {
       // printf("op file -- %s\n", output_file_name);
       break;
     case 'h':
-      printf("usage - ./main INPUT_FILE_NAME -o OUTPUT_FILE_NAME\n");
+      printf("usage - ./bfc INPUT_FILE_NAME -o OUTPUT_FILE_NAME\n");
       break;
     default:
-      printf("invalid argument %c, use -h to check available arguments\n",
+      printf("invalid argument '%c', use -h to check available arguments\n",
              optopt);
       exit(EXIT_FAILURE);
     }
