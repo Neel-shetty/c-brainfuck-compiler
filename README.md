@@ -6,6 +6,12 @@ Install these if you dont have it already.
 - make
 - nasm
 - ld (from binutils)
+
+#### Arch Linux
+```console
+pacman -S make binutils nasm
+```
+
 ### Demo
 ```console
 make
