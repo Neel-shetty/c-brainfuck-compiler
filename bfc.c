@@ -1,4 +1,3 @@
-// #include <bits/getopt_core.h>
 #include <getopt.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -522,7 +521,7 @@ int main(int argc, char **argv) {
     switch (opt) {
     case 'o':
       output_file_name = optarg;
-      printf("op file -- %s\n", output_file_name);
+      // printf("op file -- %s\n", output_file_name);
       break;
     case 'h':
       printf("usage - ./main INPUT_FILE_NAME -o OUTPUT_FILE_NAME\n");
@@ -535,10 +534,11 @@ int main(int argc, char **argv) {
   }
   if (optind < argc) {
     input_file_name = argv[optind];
-    printf("ip -- %s\n", input_file_name);
-    if (input_file_name == NULL) {
-      printf("error, no ip file");
-    }
+    // printf("ip -- %s\n", input_file_name);
+  }
+  if (input_file_name == NULL) {
+    printf("Error - No input file specified");
+    exit(EXIT_FAILURE);
   }
 
   struct instructions *instructions = NULL;
