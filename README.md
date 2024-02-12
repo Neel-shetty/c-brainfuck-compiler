@@ -5,7 +5,7 @@ It outputs an assembly file which is used to create an executable binary using n
 Install these if you dont have it already.
 - make
 - nasm
-- ld
+- ld (from binutils)
 ### Demo
 ```console
 make
