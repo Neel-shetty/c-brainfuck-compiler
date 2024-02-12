@@ -1,3 +1,5 @@
+// #include <bits/getopt_core.h>
+#include <getopt.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -513,10 +515,36 @@ void print_instructions(const struct instructions *instrs) {
 
 int main(int argc, char **argv) {
   char *program = NULL;
+  int opt = 0;
+  char *output_file_name = "a.out";
+  char *input_file_name = NULL;
+  while ((opt = getopt(argc, argv, "o:i:h")) != -1) {
+    switch (opt) {
+    case 'o':
+      output_file_name = optarg;
+      printf("op file -- %s\n", output_file_name);
+      break;
+    case 'h':
+      printf("usage - ./main INPUT_FILE_NAME -o OUTPUT_FILE_NAME\n");
+      break;
+    default:
+      printf("invalid argument %c, use -h to check available arguments\n",
+             optopt);
+      exit(EXIT_FAILURE);
+    }
+  }
+  if (optind < argc) {
+    input_file_name = argv[optind];
+    printf("ip -- %s\n", input_file_name);
+    if (input_file_name == NULL) {
+      printf("error, no ip file");
+    }
+  }
+
   struct instructions *instructions = NULL;
   int result = 0;
-  char *output = "output.asm";
-  program = read_bf_file("calculator.bf");
+  char *output = "/tmp/output.asm";
+  program = read_bf_file(input_file_name);
   instructions = init_instructions();
   parse_instructions(instructions, program);
   // print_instructions(instructions);
@@ -530,6 +558,12 @@ int main(int argc, char **argv) {
 
   // interpret_instructions(instructions, "output.txt", &tape_index);
   generate_assembly(instructions, output);
+  char *generate_executable;
+  asprintf(&generate_executable,
+           "nasm -felf64 -g /tmp/output.asm -o "
+           "/tmp/output.o && ld /tmp/output.o -o %s",
+           output_file_name);
+  system(generate_executable);
 
 cleanup:
   if (instructions != NULL) {
