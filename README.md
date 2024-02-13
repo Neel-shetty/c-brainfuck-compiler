@@ -11,6 +11,10 @@ Install these if you dont have it already.
 ```console
 pacman -S make binutils nasm
 ```
+#### Fedora
+```console
+dnf install make binutils nasm
+```
 
 ### Demo
 ```console
