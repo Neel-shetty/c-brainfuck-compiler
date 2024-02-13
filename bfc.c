@@ -287,7 +287,6 @@ void generate_assembly_block(FILE *f, struct instructions *instructions,
         count++;
         (*index)++;
       }
-      // interpret_increment(count);
       generate_assembly_increment(f, count);
       break;
     }
@@ -298,7 +297,6 @@ void generate_assembly_block(FILE *f, struct instructions *instructions,
         count++;
         (*index)++;
       }
-      // interpret_decrement(count);
       generate_assembly_decrement(f, count);
       break;
     }
@@ -371,125 +369,6 @@ void generate_assembly(struct instructions *instructions, char *name) {
     fclose(f);
   }
 }
-//
-// void interpret_move_right(uint count) {
-//   for (uint i = 0; i < count; i++) {
-//     if (tape_index < TAPE_LENGTH) {
-//       tape_index++;
-//     }
-//   }
-//   return;
-// }
-// void interpret_move_left(uint count) {
-//   for (uint i = 0; i < count; i++) {
-//     if (tape_index != 0) {
-//       tape_index--;
-//     }
-//     return;
-//   }
-// }
-// void interpret_increment(uint count) {
-//   for (uint i = 0; i < count; i++) {
-//     if (tape[tape_index] == 255) {
-//       tape[tape_index] = 0;
-//       continue;
-//     }
-//     tape[tape_index] += 1;
-//   }
-// }
-// void interpret_decrement(uint count) {
-//   for (uint i = 0; i < count; i++) {
-//     if (tape[tape_index] == 255) {
-//       tape[tape_index] = 0;
-//       continue;
-//     }
-//     tape[tape_index] -= 1;
-//   }
-// }
-//
-// void interpret_instructions(struct instructions *instructions, char *name,
-//                             int *index) {
-//   while (*index < instructions->count) {
-//     printf("%d\n", *index);
-//     switch (instructions->items[*index].type) {
-//     case MOVE_RIGHT: {
-//       uint count = 1;
-//       while (*index < instructions->count - 1 &&
-//              instructions->items[*index + 1].type == MOVE_RIGHT) {
-//         count++;
-//         (*index)++;
-//       }
-//       interpret_move_right(count);
-//       break;
-//     }
-//     case MOVE_LEFT: {
-//       uint count = 1;
-//       while (*index < instructions->count - 1 &&
-//              instructions->items[*index + 1].type == MOVE_LEFT) {
-//         count++;
-//         (*index)++;
-//       }
-//       interpret_move_left(count);
-//       break;
-//     }
-//     case INCREMENT: {
-//       uint count = 1;
-//       while (*index < instructions->count - 1 &&
-//              instructions->items[*index + 1].type == INCREMENT) {
-//         count++;
-//         (*index)++;
-//       }
-//       interpret_increment(count);
-//       break;
-//     }
-//     case DECREMENT: {
-//       uint count = 1;
-//       while (*index < instructions->count - 1 &&
-//              instructions->items[*index + 1].type == INCREMENT) {
-//         count++;
-//         (*index)++;
-//       }
-//       interpret_decrement(count);
-//       break;
-//     }
-//     case OUTPUT:
-//       printf("%c", tape[tape_index]);
-//       break;
-//     case INPUT:
-//       scanf("%d", &tape[tape_index]);
-//       break;
-//     case JUMP_FORWARD:
-//       // if (tape[tape_index] == 0) {
-//       //   int loop_count = 1;
-//       //   while (loop_count > 0) {
-//       //     (*index)++;
-//       //     if (instructions->items[*index].type == JUMP_FORWARD) {
-//       //       loop_count++;
-//       //     } else if (instructions->items[*index].type == JUMP_BACKWARD) {
-//       //       loop_count--;
-//       //     }
-//       //   }
-//       // }
-//       break;
-//     case JUMP_BACKWARD:
-//       // if (tape[tape_index] != 0) {
-//       //   int loop_count = 1;
-//       //   while (loop_count > 0) {
-//       //     (*index)--;
-//       //     if (instructions->items[*index].type == JUMP_FORWARD) {
-//       //       loop_count--;
-//       //     } else if (instructions->items[*index].type == JUMP_BACKWARD) {
-//       //       loop_count++;
-//       //     }
-//       //   }
-//       // }
-//       break;
-//     default:
-//       break;
-//     }
-//     (*index)++;
-//   }
-// }
 
 void print_instructions(const struct instructions *instrs) {
   if (instrs == NULL) {
@@ -537,7 +416,7 @@ int main(int argc, char **argv) {
     // printf("ip -- %s\n", input_file_name);
   }
   if (input_file_name == NULL) {
-    printf("Error - No input file specified");
+    printf("Error - No input file specified\n");
     exit(EXIT_FAILURE);
   }
 
@@ -556,7 +435,6 @@ int main(int argc, char **argv) {
     goto cleanup;
   }
 
-  // interpret_instructions(instructions, "output.txt", &tape_index);
   generate_assembly(instructions, output);
   char *generate_executable;
   asprintf(&generate_executable,
